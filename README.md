@@ -10,6 +10,7 @@ This Laravel-based Contacts Manager allows users to import contacts from an XML 
 - Full CRUD (Create, Read, Update, Delete) operations for managing contacts via web routes.
 - Database migrations to create the `contacts` table.
 - A paginated contacts list with improved navigation.
+- Job queue processing for handling background tasks.
 
 ## Features Implemented
 
@@ -134,7 +135,17 @@ public function importXML(Request $request)
 }
 ```
 
-### 4. **Displaying Contacts List with Improved Pagination**
+### 4. **Running Job Queue in the Background**
+
+To process queued jobs in the background, run the following command:
+
+```sh
+php artisan queue:work
+```
+
+This ensures that queued tasks such as contact imports run efficiently without blocking other operations.
+
+### 5. **Displaying Contacts List with Improved Pagination**
 
 The contacts list is displayed with Laravel pagination, ensuring smooth navigation even for large datasets.
 
