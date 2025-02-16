@@ -20,6 +20,64 @@ class ContactController extends Controller
         return view('contacts.index', compact('contacts'));
     }
 
+    // Show a specific contact
+    public function show($id)
+    {
+        $contact = Contact::findOrFail($id);
+        return view('contacts.show', compact('contact'));
+    }
+
+     // Show form to edit an existing contact
+     public function edit($id)
+     {
+         $contact = Contact::findOrFail($id);
+         return view('contacts.edit', compact('contact'));
+     }
+
+     public function create()
+    {
+        return view('contacts.create');
+    }
+
+    // Store a new contact
+    public function store(Request $request)
+    {
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+        ]);
+
+        Contact::create($request->all());
+
+        return redirect()->route('contacts.index')->with('success', 'Contact added successfully!');
+    }
+
+    // Update an existing contact
+    public function update(Request $request, $id)
+    {
+        $contact = Contact::findOrFail($id);
+
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+        ]);
+
+        $contact->update($request->all());
+
+        return redirect()->route('contacts.index')->with('success', 'Contact updated successfully!');
+    }
+
+    // Delete a contact
+    public function destroy($id)
+    {
+        $contact = Contact::findOrFail($id);
+        $contact->delete();
+
+        return redirect()->route('contacts.index')->with('success', 'Contact deleted successfully!');
+    }
+
     public function showImportForm()
     {
         return view('contacts.import');
