@@ -140,6 +140,13 @@ public function index()
 </nav>
 ```
 
+## Sample XML Files
+
+Sample XML files are available in the root directory of the GitHub repository:
+
+- **`SampleXML_large_contacts.xml`** - Contains a large dataset of contacts for testing pagination and performance.
+- **`SampleXMLcontacts.xml`** - A smaller sample XML file for quick testing.
+
 ## Installation Instructions
 
 1. Clone the repository:
