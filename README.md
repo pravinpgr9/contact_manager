@@ -4,9 +4,10 @@
 
 ## About This Project
 
-This Laravel-based Contacts Manager allows users to import contacts from an XML file and display them with pagination. It includes:
+This Laravel-based Contacts Manager allows users to import contacts from an XML file, perform CRUD operations via web routes, and display them with pagination. It includes:
 
 - XML file import functionality.
+- Full CRUD (Create, Read, Update, Delete) operations for managing contacts via web routes.
 - Database migrations to create the `contacts` table.
 - A paginated contacts list with improved navigation.
 
@@ -45,16 +46,76 @@ Run the migration:
 php artisan migrate
 ```
 
-### 2. **Importing Contacts from an XML File**
+### 2. **CRUD Operations (Web Routes)**
 
-We implemented a feature that allows users to upload an XML file containing contacts. The data is parsed and stored in the database.
+#### **Routes (`web.php`)**
+```php
+Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
+Route::get('/contacts/import', [ContactController::class, 'showImportForm'])->name('contacts.importForm');
+Route::post('/contacts/import', [ContactController::class, 'importXML'])->name('contacts.import');
+
+Route::get('/contacts/{id}/edit', [ContactController::class, 'edit'])->name('contacts.edit'); // Edit Contact Page
+Route::put('/contacts/{id}', [ContactController::class, 'update'])->name('contacts.update'); // Update Contact
+Route::delete('/contacts/{id}', [ContactController::class, 'destroy'])->name('contacts.destroy'); // Delete Contact
+
+Route::get('/contacts/create', [ContactController::class, 'create'])->name('contacts.create'); // New Contact Page
+Route::post('/contacts', [ContactController::class, 'store'])->name('contacts.store'); // Store New Contact
+```
+
+#### **Create a Contact**
+```php
+public function store(Request $request)
+{
+    $request->validate([
+        'first_name' => 'required|string',
+        'last_name' => 'required|string',
+        'phone' => 'required|string'
+    ]);
+
+    Contact::create($request->all());
+    return redirect()->route('contacts.index')->with('success', 'Contact added successfully!');
+}
+```
+
+#### **Read Contacts (List with Pagination)**
+```php
+public function index()
+{
+    $contacts = Contact::paginate(10);
+    return view('contacts.index', compact('contacts'));
+}
+```
+
+#### **Update a Contact**
+```php
+public function update(Request $request, Contact $contact)
+{
+    $request->validate([
+        'first_name' => 'required|string',
+        'last_name' => 'required|string',
+        'phone' => 'required|string'
+    ]);
+
+    $contact->update($request->all());
+    return redirect()->route('contacts.index')->with('success', 'Contact updated successfully!');
+}
+```
+
+#### **Delete a Contact**
+```php
+public function destroy(Contact $contact)
+{
+    $contact->delete();
+    return redirect()->route('contacts.index')->with('success', 'Contact deleted successfully!');
+}
+```
+
+### 3. **Importing Contacts from an XML File**
+
+Users can upload an XML file containing contacts. The data is parsed and stored in the database.
 
 #### Controller (`ContactController.php`)
 ```php
-use Illuminate\Http\Request;
-use App\Models\Contact;
-use Illuminate\Support\Facades\Storage;
-
 public function importXML(Request $request)
 {
     $request->validate(['xml_file' => 'required|mimes:xml']);
@@ -69,36 +130,13 @@ public function importXML(Request $request)
         ]);
     }
 
-    return redirect()->back()->with('success', 'Contacts imported successfully!');
+    return redirect()->route('contacts.index')->with('success', 'Contacts imported successfully!');
 }
 ```
 
-#### Route (`web.php`)
-```php
-Route::post('/contacts/import', [ContactController::class, 'importXML'])->name('contacts.import');
-```
-
-#### Import Form (`import.blade.php`)
-```html
-<form action="{{ route('contacts.import') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-    <input type="file" name="xml_file" required>
-    <button type="submit" class="btn btn-primary">Upload XML</button>
-</form>
-```
-
-### 3. **Displaying Contacts List with Improved Pagination**
+### 4. **Displaying Contacts List with Improved Pagination**
 
 The contacts list is displayed with Laravel pagination, ensuring smooth navigation even for large datasets.
-
-#### Controller (`ContactController.php`)
-```php
-public function index()
-{
-    $contacts = Contact::paginate(10); // 10 contacts per page
-    return view('contacts.index', compact('contacts'));
-}
-```
 
 #### Blade View (`contacts/index.blade.php`)
 ```blade
@@ -111,24 +149,11 @@ public function index()
             <a class="page-link" href="{{ $contacts->previousPageUrl() }}">Previous</a>
         </li>
         
-        @php
-            $start = max($contacts->currentPage() - 2, 1);
-            $end = min($contacts->currentPage() + 2, $contacts->lastPage());
-        @endphp
-        
-        @if($start > 1)
-            <li class="page-item disabled"><span class="page-link">...</span></li>
-        @endif
-        
-        @for ($i = $start; $i <= $end; $i++)
+        @for ($i = 1; $i <= $contacts->lastPage(); $i++)
             <li class="page-item {{ $contacts->currentPage() == $i ? 'active' : '' }}">
                 <a class="page-link" href="{{ $contacts->url($i) }}">{{ $i }}</a>
             </li>
         @endfor
-        
-        @if($end < $contacts->lastPage())
-            <li class="page-item disabled"><span class="page-link">...</span></li>
-        @endif
         
         <li class="page-item {{ $contacts->hasMorePages() ? '' : 'disabled' }}">
             <a class="page-link" href="{{ $contacts->nextPageUrl() }}">Next</a>
